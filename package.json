@@ -3,15 +3,20 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
+    "dev": "node scripts/run-next.js dev",
+    "build": "node scripts/run-next.js build --webpack",
+    "start": "node scripts/run-next.js start",
+    "lint": "node scripts/run-eslint.js"
   },
   "dependencies": {
-    "next": "16.3.4",
+    "@clerk/nextjs": "^7.9.1",
+    "@types/pg": "^8.23.1",
+    "lucide-react": "^1.41.0",
+    "next": "^16.3.4",
+    "pg": "^8.23.0",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
@@ -23,5 +28,5 @@
     "tailwindcss": "^4",
     "typescript": "^5"
   },
-  "packageManager": "pnpm@10.31.0"
+  "packageManager": "pnpm@11.19.0"
 }
