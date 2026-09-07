@@ -4,7 +4,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "User Management",
-  description: "A simple user management web app.",
+  description: "A simple user management app backed by PostgreSQL.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

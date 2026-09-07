@@ -1,81 +1,86 @@
-import { ensureUsersTable, getPool } from './db';
+import { ensureSchema, query } from "@/lib/db";
+import type { UserInput } from "@/lib/validation";
 
-export type UserRecord = {
+export type User = {
   id: string;
   name: string;
   email: string;
   phone: string;
+  createdAt: string;
 };
 
-type PostgresUserRow = {
-  id: string;
+type UserRow = {
+  id: number;
   name: string;
   email: string;
   phone: string;
+  created_at: Date;
 };
 
-function mapUser(row: PostgresUserRow): UserRecord {
+function toUser(row: UserRow): User {
   return {
-    id: row.id,
+    id: String(row.id),
     name: row.name,
     email: row.email,
     phone: row.phone,
+    createdAt: row.created_at.toISOString(),
   };
 }
 
 export async function listUsers() {
-  await ensureUsersTable();
+  await ensureSchema();
 
-  const result = await getPool().query<PostgresUserRow>(`
-    SELECT id::text, name, email, phone
+  const result = await query<UserRow>(`
+    SELECT id, name, email, phone, created_at
     FROM users
-    ORDER BY created_at DESC, id DESC
+    ORDER BY created_at DESC, id DESC;
   `);
 
-  return result.rows.map(mapUser);
+  return result.rows.map(toUser);
 }
 
-export async function createUser(user: Omit<UserRecord, 'id'>) {
-  await ensureUsersTable();
+export async function createUser(input: UserInput) {
+  await ensureSchema();
 
-  const result = await getPool().query<PostgresUserRow>(
+  const result = await query<UserRow>(
     `
       INSERT INTO users (name, email, phone)
       VALUES ($1, $2, $3)
-      RETURNING id::text, name, email, phone
+      RETURNING id, name, email, phone, created_at;
     `,
-    [user.name, user.email, user.phone],
+    [input.name, input.email, input.phone],
   );
 
-  return mapUser(result.rows[0]);
+  return toUser(result.rows[0]);
 }
 
-export async function updateUser(
-  id: string,
-  user: Omit<UserRecord, 'id' | 'phone'>,
-) {
-  await ensureUsersTable();
+export async function updateUser(id: string | number, input: UserInput) {
+  await ensureSchema();
 
-  const result = await getPool().query<PostgresUserRow>(
+  const result = await query<UserRow>(
     `
       UPDATE users
-      SET name = $1, email = $2
-      WHERE id = $3
-      RETURNING id::text, name, email, phone
+      SET name = $1, email = $2, phone = $3
+      WHERE id = $4
+      RETURNING id, name, email, phone, created_at;
     `,
-    [user.name, user.email, id],
+    [input.name, input.email, input.phone, id],
   );
 
-  return result.rows[0] ? mapUser(result.rows[0]) : null;
+  return result.rows[0] ? toUser(result.rows[0]) : null;
 }
 
-export async function deleteUser(id: string) {
-  await ensureUsersTable();
+export async function deleteUser(id: string | number) {
+  await ensureSchema();
 
-  const result = await getPool().query(
-    'DELETE FROM users WHERE id = $1 RETURNING id',
+  const result = await query<UserRow>(
+    `
+      DELETE FROM users
+      WHERE id = $1
+      RETURNING id, name, email, phone, created_at;
+    `,
     [id],
   );
 
-  return (result.rowCount ?? 0) > 0;
+  return result.rows[0] ? toUser(result.rows[0]) : null;
 }
